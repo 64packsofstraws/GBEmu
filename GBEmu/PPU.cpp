@@ -76,22 +76,22 @@ void PPU::iowrite(uint16_t addr, uint8_t val)
 
 uint8_t PPU::read_vram(uint16_t addr)
 {
-	return vram[addr - 0x8000];
+	return (mode != 3) ? vram[addr - 0x8000] : 0xFF;
 }
 
 void PPU::write_vram(uint16_t addr, uint8_t val)
 {
-	vram[addr - 0x8000] = val;
+	if (mode != 3) vram[addr - 0x8000] = val;
 }
 
 uint8_t PPU::read_oam(uint16_t addr)
 {
-	return oam[addr - 0xFE00];
+	return (mode != 2 && mode != 3) ? oam[addr - 0xFE00] : 0xFF;
 }
 
 void PPU::write_oam(uint16_t addr, uint8_t val)
 {
-	oam[addr - 0xFE00] = val;
+	if (mode != 2 && mode != 3) oam[addr - 0xFE00] = val;
 }
 
 void PPU::cmp_lyc_ly()
