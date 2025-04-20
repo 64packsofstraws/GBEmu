@@ -18,10 +18,10 @@ GB::GB(const char* filename) : cpu(this), mmu(this), timer(this), io(this), joyp
 	rom_size = 0x8000 * (1 << header[0x48]);
 
 	switch (header[0x49]) {
-	case 0: ram_size = 0; break;
-	case 2: ram_size = 8192; break;
-	case 3: ram_size = 32768; break;
-	default: ram_size = 0;
+		case 0: ram_size = 0; break;
+		case 2: ram_size = 8192; break;
+		case 3: ram_size = 32768; break;
+		default: ram_size = 0;
 	}
 
 	f.seekg(0x0, std::ios::beg);
@@ -31,8 +31,8 @@ GB::GB(const char* filename) : cpu(this), mmu(this), timer(this), io(this), joyp
 	f.read((char*)rom.data(), rom_size);
 
 	switch (header[0x47]) {
-	case 0: mbc = std::make_unique<MBC0>(rom, ram); break;
-	case 1: mbc = std::make_unique<MBC1>(rom, ram); break;
+		case 0: mbc = std::make_unique<MBC0>(rom, ram); break;
+		case 1: mbc = std::make_unique<MBC1>(rom, ram); break;
 	}
 
 	f.close();
@@ -47,13 +47,13 @@ void GB::run()
 	while (running) {
 		while (SDL_PollEvent(&e)) {
 			switch (e.type) {
-			case SDL_EVENT_QUIT:
-				running = false;
-				break;
+				case SDL_EVENT_QUIT:
+					running = false;
+					break;
 
-			case SDL_EVENT_KEY_DOWN:
-			case SDL_EVENT_KEY_UP:
-				joyp.update_joyp(e.type, e.key.key);
+				case SDL_EVENT_KEY_DOWN:
+				case SDL_EVENT_KEY_UP:
+					joyp.update_joyp(e.type, e.key.key);
 			}
 		}
 

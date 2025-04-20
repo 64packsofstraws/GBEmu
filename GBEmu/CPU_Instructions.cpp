@@ -544,13 +544,13 @@ void CPU::halt()
 uint8_t* CPU::get_register(uint8_t n)
 {
 	switch (n % 0x8) {
-	case 0: return &B;
-	case 1: return &C;
-	case 2: return &D;
-	case 3: return &E;
-	case 4: return &H;
-	case 5: return &L;
-	case 7: return &A;
+		case 0: return &B;
+		case 1: return &C;
+		case 2: return &D;
+		case 3: return &E;
+		case 4: return &H;
+		case 5: return &L;
+		case 7: return &A;
 	}
 
 	return nullptr;
@@ -565,28 +565,28 @@ uint8_t CPU::prefix_cb()
 	if (op < 0x40) {
 		if (reg) {
 			switch (op >> 3) {
-			case 0x00: rlc(*reg); break;
-			case 0x01: rrc(*reg); break;
-			case 0x02: rl(*reg); break;
-			case 0x03: rr(*reg); break;
-			case 0x04: sla(*reg); break;
-			case 0x05: sra(*reg); break;
-			case 0x06: swap(*reg); break;
-			case 0x07: srl(*reg); break;
+				case 0x00: rlc(*reg); break;
+				case 0x01: rrc(*reg); break;
+				case 0x02: rl(*reg); break;
+				case 0x03: rr(*reg); break;
+				case 0x04: sla(*reg); break;
+				case 0x05: sra(*reg); break;
+				case 0x06: swap(*reg); break;
+				case 0x07: srl(*reg); break;
 			}
 		} 
 		else {
 			uint8_t tmp = cpu_read(HL);
 
 			switch (op >> 3) {
-			case 0x00: rlc(tmp); break;
-			case 0x01: rrc(tmp); break;
-			case 0x02: rl(tmp); break;
-			case 0x03: rr(tmp); break;
-			case 0x04: sla(tmp); break;
-			case 0x05: sra(tmp); break;
-			case 0x06: swap(tmp); break;
-			case 0x07: srl(tmp); break;
+				case 0x00: rlc(tmp); break;
+				case 0x01: rrc(tmp); break;
+				case 0x02: rl(tmp); break;
+				case 0x03: rr(tmp); break;
+				case 0x04: sla(tmp); break;
+				case 0x05: sra(tmp); break;
+				case 0x06: swap(tmp); break;
+				case 0x07: srl(tmp); break;
 			}
 
 			cpu_write(HL, tmp);
@@ -597,18 +597,18 @@ uint8_t CPU::prefix_cb()
 
 		if (reg) {
 			switch (op >> 6) {
-			case 0x1: bit(idx, *reg); break;
-			case 0x2: res(idx, *reg); break;
-			case 0x3: set(idx, *reg); break;
+				case 0x1: bit(idx, *reg); break;
+				case 0x2: res(idx, *reg); break;
+				case 0x3: set(idx, *reg); break;
 			}
 		}
 		else {
 			uint8_t tmp = cpu_read(HL);
 
 			switch (op >> 6) {
-			case 0x1: bit(idx, tmp); break;
-			case 0x2: res(idx, tmp); cpu_write(HL, tmp); break;
-			case 0x3: set(idx, tmp); cpu_write(HL, tmp); break;
+				case 0x1: bit(idx, tmp); break;
+				case 0x2: res(idx, tmp); cpu_write(HL, tmp); break;
+				case 0x3: set(idx, tmp); cpu_write(HL, tmp); break;
 			}
 		}
 	}

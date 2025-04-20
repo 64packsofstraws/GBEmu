@@ -29,16 +29,16 @@ PPU::~PPU()
 uint8_t PPU::ioread(uint16_t addr)
 {
 	switch (addr) {
-	case 0xFF40: return lcdc;
-	case 0xFF41: return stat;
-	case 0xFF42: return scy;
-	case 0xFF43: return scx;
-	case 0xFF44: return ly;
-	case 0xFF45: return lyc;
-	case 0xFF56: return dma;
-	case 0xFF47: return bgp;
-	case 0xFF4A: return wy;
-	case 0xFF4B: return wx;
+		case 0xFF40: return lcdc;
+		case 0xFF41: return stat;
+		case 0xFF42: return scy;
+		case 0xFF43: return scx;
+		case 0xFF44: return ly;
+		case 0xFF45: return lyc;
+		case 0xFF56: return dma;
+		case 0xFF47: return bgp;
+		case 0xFF4A: return wy;
+		case 0xFF4B: return wx;
 	}
 	return 0xFF;
 }
@@ -46,35 +46,35 @@ uint8_t PPU::ioread(uint16_t addr)
 void PPU::iowrite(uint16_t addr, uint8_t val)
 {
 	switch (addr) {
-	case 0xFF40: {
-		bool prev_lcd = (lcdc & 0x80);
+		case 0xFF40: {
+			bool prev_lcd = (lcdc & 0x80);
 
-		if (!(val & 1)) val &= ~(1 << 5);
+			if (!(val & 1)) val &= ~(1 << 5);
 
-		if (!(val & 0x80)) {
-			lx = ly = dot = 0;
-			mode = 0;
-			stat &= (~0x3);
+			if (!(val & 0x80)) {
+				lx = ly = dot = 0;
+				mode = 0;
+				stat &= (~0x3);
+			}
+
+			if ((val & 0x80) && !prev_lcd) {
+				mode = 2;
+				cmp_lyc_ly();
+				check_stat_int();
+			}
+
+			lcdc = val;
 		}
+				   break;
 
-		if ((val & 0x80) && !prev_lcd) {
-			mode = 2;
-			cmp_lyc_ly();
-			check_stat_int();
-		}
-
-		lcdc = val;
-	}
-			   break;
-
-	case 0xFF41: stat = val; break;
-	case 0xFF42: scy = val; break;
-	case 0xFF43: scx = val; break;
-	case 0xFF45: lyc = val; cmp_lyc_ly();  break;
-	case 0xFF46: dma = val; dma_idx = 0; transfer = true; break;
-	case 0xFF47: bgp = val; break;
-	case 0xFF4A: wy = val; break;
-	case 0xFF4B: wx = val; break;
+		case 0xFF41: stat = val; break;
+		case 0xFF42: scy = val; break;
+		case 0xFF43: scx = val; break;
+		case 0xFF45: lyc = val; cmp_lyc_ly();  break;
+		case 0xFF46: dma = val; dma_idx = 0; transfer = true; break;
+		case 0xFF47: bgp = val; break;
+		case 0xFF4A: wy = val; break;
+		case 0xFF4B: wx = val; break;
 	}
 }
 
@@ -141,108 +141,108 @@ void PPU::tick()
 	dot++;
 
 	switch (mode) {
-	case 2:
-		if (dot >= 80) {
-			mode = 3;
-			dot = 0;
-			stat = (stat & ~0x3) | mode;
-		}
-		break;
+		case 2:
+			if (dot >= 80) {
+				mode = 3;
+				dot = 0;
+				stat = (stat & ~0x3) | mode;
+			}
+			break;
 
-	case 3:
-		if (dot >= 12 && lx < 160) {
-			uint16_t tilemap_base;
-			uint8_t x, y;
+		case 3:
+			if (dot >= 12 && lx < 160) {
+				uint16_t tilemap_base;
+				uint8_t x, y;
 
-			if (!(lcdc & 1)) {
-				pixelbuf[idx(lx, ly)] = 0;
-				lx++;
+				if (!(lcdc & 1)) {
+					pixelbuf[idx(lx, ly)] = 0;
+					lx++;
 
-				if (dot >= 172) {
-					mode = 0;
-					dot = 0;
+					if (dot >= 172) {
+						mode = 0;
+						dot = 0;
 
-					check_stat_int();
+						check_stat_int();
+					}
+					return;
 				}
-				return;
+
+				if ((lcdc >> 5) & 1 && (wx < 167 && wy < 144) && ((lx + 7) >= wx && ly >= wy)) {
+					tilemap_base = ((lcdc >> 6) & 1) ? 0x1C00 : 0x1800;
+					x = lx - (wx - 7);
+					y = wly - wy;
+				}
+				else {
+					tilemap_base = ((lcdc >> 3) & 1) ? 0x1C00 : 0x1800;
+					x = (scx + lx) % 256;
+					y = (scy + ly) % 256;
+				}
+
+				uint16_t tmap_idx = tilemap_base + ((y / 8) * 32 + (x / 8));
+
+				uint16_t idx = get_tile(vram[tmap_idx]) + 2 * (y % 8);
+
+				uint8_t p1 = vram[idx];
+				uint8_t p2 = vram[idx + 1];
+
+				uint8_t b1 = (p1 & (1 << ( 7 - (x % 8) ))) != 0;
+				uint8_t b2 = (p2 & (1 << ( 7 - (x % 8) ))) != 0;
+
+				pixelbuf[idx(lx, ly)] = (b2 << 1) | b1;
+
+				lx++;
 			}
 
-			if ((lcdc >> 5) & 1 && (wx < 167 && wy < 144) && ((lx + 7) >= wx && ly >= wy)) {
-				tilemap_base = ((lcdc >> 6) & 1) ? 0x1C00 : 0x1800;
-				x = lx - (wx - 7);
-				y = wly - wy;
-			}
-			else {
-				tilemap_base = ((lcdc >> 3) & 1) ? 0x1C00 : 0x1800;
-				x = (scx + lx) % 256;
-				y = (scy + ly) % 256;
-			}
-
-			uint16_t tmap_idx = tilemap_base + ((y / 8) * 32 + (x / 8));
-
-			uint16_t idx = get_tile(vram[tmap_idx]) + 2 * (y % 8);
-
-			uint8_t p1 = vram[idx];
-			uint8_t p2 = vram[idx + 1];
-
-			uint8_t b1 = (p1 & (1 << ( 7 - (x % 8) ))) != 0;
-			uint8_t b2 = (p2 & (1 << ( 7 - (x % 8) ))) != 0;
-
-			pixelbuf[idx(lx, ly)] = (b2 << 1) | b1;
-
-			lx++;
-		}
-
-		if (dot >= 172) {
-			mode = 0;
-			dot = 0;
-
-			check_stat_int();
-		}
-		break;
-
-	case 0:
-		if (dot >= 204) {
-			wly += (wx < 167 && wy < 144);
-			dot = 0;
-			lx = 0;
-
-			if (ly == 143) {
-				mode = 1;
-				wly = 0;
-				frame_ready = true;
-
-				gb->cpu.req_intf(0);
-				check_stat_int();
-			}
-			else {
-				mode = 2;
-				check_stat_int();
-			}
-
-			ly++;
-			cmp_lyc_ly();
-		}
-		break;
-
-	case 1:
-		if (dot >= 456) {
-			if (ly == 153) {
-				ly = 0;
-				lx = 0;
-				mode = 2;
+			if (dot >= 172) {
+				mode = 0;
 				dot = 0;
 
-				cmp_lyc_ly();
 				check_stat_int();
-				return;
 			}
+			break;
 
-			ly++;
-			cmp_lyc_ly();
-			dot = 0;
-		}
-		break;
+		case 0:
+			if (dot >= 204) {
+				wly += (wx < 167 && wy < 144);
+				dot = 0;
+				lx = 0;
+
+				if (ly == 143) {
+					mode = 1;
+					wly = 0;
+					frame_ready = true;
+
+					gb->cpu.req_intf(0);
+					check_stat_int();
+				}
+				else {
+					mode = 2;
+					check_stat_int();
+				}
+
+				ly++;
+				cmp_lyc_ly();
+			}
+			break;
+
+		case 1:
+			if (dot >= 456) {
+				if (ly == 153) {
+					ly = 0;
+					lx = 0;
+					mode = 2;
+					dot = 0;
+
+					cmp_lyc_ly();
+					check_stat_int();
+					return;
+				}
+
+				ly++;
+				cmp_lyc_ly();
+				dot = 0;
+			}
+			break;
 	}
 }
 
