@@ -11,9 +11,8 @@ PPU::PPU(GB* gb) : gb(gb), vram(8192, 0), oam(0xA0, 0), pixelbuf(160 * 144, 0)
 	mode = 2;
 	dot = 0;
 	bgp = 0;
-	dma = dma_idx = 0;
+	dma = 0;
 	frame_ready = false;
-	transfer = false;
 
 	SDL_Init(SDL_INIT_VIDEO);
 	SDL_CreateWindowAndRenderer("GBEmu", 160 * SCALE, 144 * SCALE, 0, &win, &ren);
@@ -46,9 +45,7 @@ uint8_t PPU::ioread(uint16_t addr)
 void PPU::iowrite(uint16_t addr, uint8_t val)
 {
 	switch (addr) {
-		case 0xFF40: {
-			bool prev_lcd = (lcdc & 0x80);
-
+		case 0xFF40:
 			if (!(val & 1)) val &= ~(1 << 5);
 
 			if (!(val & 0x80)) {
@@ -57,21 +54,20 @@ void PPU::iowrite(uint16_t addr, uint8_t val)
 				stat &= (~0x3);
 			}
 
-			if ((val & 0x80) && !prev_lcd) {
+			if ((val & 0x80) && !(lcdc & 0x80)) {
 				mode = 2;
 				cmp_lyc_ly();
 				check_stat_int();
 			}
 
 			lcdc = val;
-		}
-				   break;
+			break;
 
 		case 0xFF41: stat = val; break;
 		case 0xFF42: scy = val; break;
 		case 0xFF43: scx = val; break;
 		case 0xFF45: lyc = val; cmp_lyc_ly();  break;
-		case 0xFF46: dma = val; dma_idx = 0; transfer = true; break;
+		case 0xFF46: dma = val; dma_transfer(); break;
 		case 0xFF47: bgp = val; break;
 		case 0xFF4A: wy = val; break;
 		case 0xFF4B: wx = val; break;
@@ -119,14 +115,8 @@ void PPU::dma_transfer()
 {
 	uint16_t src = dma << 8;
 
-	if (dma_idx > 0x9F) {
-		transfer = false;
-		dma_idx = 0;
-		return;
-	}
-
-	oam[dma_idx] = gb->mmu.read(src + dma_idx);
-	dma_idx++;
+	for (int i = 0; i < 0xA0; i++)
+		oam[i] = gb->mmu.read(src + i);
 }
 
 uint16_t PPU::get_tile(uint8_t off)
@@ -137,7 +127,6 @@ uint16_t PPU::get_tile(uint8_t off)
 void PPU::tick()
 {
 	if (!(lcdc & 0x80)) return;
-	if (transfer) dma_transfer();
 	dot++;
 
 	switch (mode) {

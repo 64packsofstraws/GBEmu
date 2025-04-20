@@ -3,7 +3,7 @@
 
 int main(int argc, char** argv)
 {
-	GB gb("C:\\Users\\Aaron Straw\\Downloads\\instr_timing.gb");
+	GB gb("C:\\Users\\Aaron Straw\\Downloads\\dmg-acid2.gb");
 	gb.run();
 
 	return 0;

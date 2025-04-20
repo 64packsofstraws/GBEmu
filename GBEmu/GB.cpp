@@ -64,8 +64,8 @@ void GB::run()
 
 			Uint64 elapsed = SDL_GetTicks() - tick;
 
-			if (elapsed < 16) {
-				SDL_Delay(16 - elapsed);
+			if (elapsed < 24) {
+				SDL_Delay(24 - elapsed);
 
 				tick = SDL_GetTicks();
 			}

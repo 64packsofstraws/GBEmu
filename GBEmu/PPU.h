@@ -38,8 +38,6 @@ class PPU
 	uint8_t lx;
 
 	uint8_t dma;
-	uint8_t dma_idx;
-	bool transfer;
 
 	SDL_Window* win;
 	SDL_Renderer* ren;
