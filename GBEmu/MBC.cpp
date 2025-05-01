@@ -48,13 +48,21 @@ void MBC1::cart_write(uint16_t addr, uint8_t val)
 		ram_enable = (val & 0xF) == 0xA;
 	}
 	else if (addr >= 0x2000 && addr <= 0x3FFF) {
+		if (val == 0x20 || val == 0x40 || val == 0x60) {
+			rom_bank_num++;
+			return;
+		}
 		rom_bank_num = ((val & 0x1F) == 0) ? 1 : val & 0x1F;
 
 		if (rom_bank_num >= rom_bank_size)
 			rom_bank_num &= rom_bank_size - 1;
 	}
 	else if (addr >= 0x4000 && addr <= 0x5FFF) {
-		ram_bank_num = val >> 5;
+		ram_bank_num = (val >> 5) & 0x3;
+	}
+	else if (addr >= 0xA000 && addr <= 0xBFFF && ram_enable) {
+		int idx = (0x2000 * ram_bank_num) + (addr - 0xA000);
+		ram[idx] = val;
 	}
 }
 

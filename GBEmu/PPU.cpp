@@ -1,7 +1,7 @@
 #include "PPU.h"
 #include "GB.h"
 
-PPU::PPU(GB* gb) : gb(gb), vram(8192, 0), oam(0xA0, 0), pixelbuf(160 * 144, 0)
+PPU::PPU(GB* gb) : gb(gb), vram(8192, 0), oam(0xA0, 0), framebuf(160 * 144, 0)
 {
 	lcdc = 0x91;
 	stat = 0x84;
@@ -124,8 +124,8 @@ void PPU::oam_scan()
 	ObjEntry entry;
 
 	for (int i = 0; i < 0xA0; i += 4) {
-		entry.x = oam[i];
-		entry.y = oam[i + 1];
+		entry.y = oam[i];
+		entry.x = oam[i + 1];
 		entry.tileid = oam[i + 2];
 		entry.flags = oam[i + 3];
 
@@ -158,7 +158,7 @@ void PPU::render_sprites()
 		uint8_t y = i.y - 16;
 		
 		if (lcdc & 0x4) {
-			tileid = (ly - y >= 8) ? i.tileid & 0xFE : i.tileid | 0x1;
+			tileid = (ly - y >= 8) ? i.tileid | 0x1 : i.tileid & 0xFE;
 		}
 		else {
 			tileid = i.tileid;
@@ -171,13 +171,15 @@ void PPU::render_sprites()
 		uint8_t p1 = vram[tileoff];
 		uint8_t p2 = vram[tileoff + 1];
 
-		for (int j = 0; j < 8; j++) {
-			bool b1 = (p1 & (0x80 >> j)) != 0;
-			bool b2 = (p1 & (0x80 >> j)) != 0;
+		for (int j = 0; j < 8 && x + j < 160; j++) {
+			uint8_t xdir = (i.flags & 0x20) ? 0x1 << j : 0x80 >> j;
+
+			bool b1 = (p1 & xdir) != 0;
+			bool b2 = (p2 & xdir) != 0;
 			
 			uint8_t id = (b2 << 1) | b1;
 
-			if (id) pixelbuf[idx(x + j, ly)] = id;
+			if (id) framebuf[idx(x + j, ly)] = id;
 		}
 	}
 	active_obj.clear();
@@ -209,7 +211,7 @@ void PPU::tick()
 				uint8_t x, y;
 
 				if (!(lcdc & 1)) {
-					pixelbuf[idx(lx, ly)] = 0;
+					framebuf[idx(lx, ly)] = 0;
 					lx++;
 
 					if (dot == 172) {
@@ -242,7 +244,7 @@ void PPU::tick()
 				bool b1 = ( p1 & ( 0x80 >> (x % 8) )) != 0;
 				bool b2 = ( p2 & ( 0x80 >> (x % 8) )) != 0;
 
-				pixelbuf[idx(lx, ly)] = (b2 << 1) | b1;
+				framebuf[idx(lx, ly)] = (b2 << 1) | b1;
 
 				lx++;
 			}
@@ -316,7 +318,7 @@ void PPU::render()
 
 	for (int y = 0; y < 144; y++) {
 		for (int x = 0; x < 160; x++) {
-			uint8_t id = pixelbuf[idx(x, y)];
+			uint8_t id = framebuf[idx(x, y)];
 
 			SDL_Color rgb = id2rgb[(bgp >> (id * 2)) & 0x3];
 

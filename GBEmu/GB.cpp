@@ -19,8 +19,10 @@ GB::GB(const char* filename) : cpu(this), mmu(this), timer(this), io(this), joyp
 
 	switch (header[0x49]) {
 		case 0: ram_size = 0; break;
-		case 2: ram_size = 8192; break;
-		case 3: ram_size = 32768; break;
+		case 2: ram_size = 1 << 13; break;
+		case 3: ram_size = 1 << 15; break;
+		case 4: ram_size = 1 << 17; break;
+		case 5: ram_size = 1 << 16; break;
 		default: ram_size = 0;
 	}
 

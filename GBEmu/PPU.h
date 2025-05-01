@@ -16,7 +16,7 @@ class PPU
 	std::vector<uint8_t> vram;
 	std::vector<uint8_t> oam;
 
-	std::vector<uint8_t> pixelbuf;
+	std::vector<uint8_t> framebuf;
 
 	struct ObjEntry {
 		uint8_t x;
