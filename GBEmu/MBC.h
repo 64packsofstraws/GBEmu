@@ -33,7 +33,7 @@ class MBC1 : public MBC
 
 	uint8_t rom_bank_size;
 public:
-	MBC1(std::vector<uint8_t> rom, std::vector<uint8_t> ram);
+	MBC1(std::vector<uint8_t> _rom, std::vector<uint8_t> _ram);
 
 	uint8_t cart_read(uint16_t addr);
 	void cart_write(uint16_t addr, uint8_t val);

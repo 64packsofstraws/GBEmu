@@ -17,7 +17,7 @@ class Timer
 	bool delay;
 	GB* gb;
 
-	uint8_t get_tac_idx(uint8_t sel);
+	uint8_t get_tac_idx();
 	void tima_tick();
 public:
 	Timer(GB* gb);

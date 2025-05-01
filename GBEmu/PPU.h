@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <vector>
 #include <map>
-#include <list>
+#include <algorithm>
 #include <SDL3/SDL.h>
 
 #define SCALE 4
@@ -17,8 +17,16 @@ class PPU
 	std::vector<uint8_t> oam;
 
 	std::vector<uint8_t> pixelbuf;
-	std::vector<uint8_t> active_obj;
 
+	struct ObjEntry {
+		uint8_t x;
+		uint8_t y;
+		uint8_t tileid;
+		uint8_t flags;
+	};
+
+	std::vector<ObjEntry> active_obj;
+	
 	uint8_t lcdc;
 	uint8_t ly;
 	uint8_t lyc;
@@ -46,6 +54,8 @@ class PPU
 	void check_stat_int();
 
 	void dma_transfer();
+	void oam_scan();
+	void render_sprites();
 
 	uint16_t get_tile(uint8_t off);
 public:

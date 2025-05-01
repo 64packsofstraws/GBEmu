@@ -115,10 +115,74 @@ void PPU::dma_transfer()
 {
 	uint16_t src = dma << 8;
 
-	for (int i = 0; i < 0xA0; i++)
+	for (int i = 0; i <= 0x9F; i++)
 		oam[i] = gb->mmu.read(src + i);
 }
 
+void PPU::oam_scan()
+{
+	ObjEntry entry;
+
+	for (int i = 0; i < 0xA0; i += 4) {
+		entry.x = oam[i];
+		entry.y = oam[i + 1];
+		entry.tileid = oam[i + 2];
+		entry.flags = oam[i + 3];
+
+		uint8_t obj_size = (lcdc & 0x4) ? 16 : 8;
+
+		if (ly + 16 >= entry.y && ly + 16 < entry.y + obj_size) {
+			active_obj.push_back(entry);
+			if (active_obj.size() == 10) break;
+		}
+	}
+
+	std::sort(active_obj.begin(), active_obj.end(), [](const ObjEntry& a, const ObjEntry& b)
+	{
+		return a.x > b.x;
+	});
+}
+
+void PPU::render_sprites()
+{
+	if (!(lcdc & 0x2)) {
+		active_obj.clear();
+		return;
+	}
+
+	for (auto& i : active_obj) {
+		if (i.x == 0 || i.x >= 168) continue;
+
+		uint8_t tileid;
+		uint8_t x = i.x - 8;
+		uint8_t y = i.y - 16;
+		
+		if (lcdc & 0x4) {
+			tileid = (ly - y >= 8) ? i.tileid & 0xFE : i.tileid | 0x1;
+		}
+		else {
+			tileid = i.tileid;
+		}
+
+		uint8_t ydir = (i.flags & 0x40) ? 7 - (ly - y) : (ly - y);
+
+		uint16_t tileoff = tileid * 16 + 2 * (ydir % 8);
+
+		uint8_t p1 = vram[tileoff];
+		uint8_t p2 = vram[tileoff + 1];
+
+		for (int j = 0; j < 8; j++) {
+			bool b1 = (p1 & (0x80 >> j)) != 0;
+			bool b2 = (p1 & (0x80 >> j)) != 0;
+			
+			uint8_t id = (b2 << 1) | b1;
+
+			if (id) pixelbuf[idx(x + j, ly)] = id;
+		}
+	}
+	active_obj.clear();
+}
+ 
 uint16_t PPU::get_tile(uint8_t off)
 {
 	return (lcdc & 0x10) ? off * 16 : 0x1000 + static_cast<int8_t>(off) * 16;
@@ -131,10 +195,11 @@ void PPU::tick()
 
 	switch (mode) {
 		case 2:
-			if (dot >= 80) {
+			if (dot == 80) {
 				mode = 3;
 				dot = 0;
 				stat = (stat & ~0x3) | mode;
+				oam_scan();
 			}
 			break;
 
@@ -147,7 +212,7 @@ void PPU::tick()
 					pixelbuf[idx(lx, ly)] = 0;
 					lx++;
 
-					if (dot >= 172) {
+					if (dot == 172) {
 						mode = 0;
 						dot = 0;
 
@@ -174,24 +239,24 @@ void PPU::tick()
 				uint8_t p1 = vram[idx];
 				uint8_t p2 = vram[idx + 1];
 
-				uint8_t b1 = (p1 & (1 << ( 7 - (x % 8) ))) != 0;
-				uint8_t b2 = (p2 & (1 << ( 7 - (x % 8) ))) != 0;
+				bool b1 = ( p1 & ( 0x80 >> (x % 8) )) != 0;
+				bool b2 = ( p2 & ( 0x80 >> (x % 8) )) != 0;
 
 				pixelbuf[idx(lx, ly)] = (b2 << 1) | b1;
 
 				lx++;
 			}
 
-			if (dot >= 172) {
+			if (dot == 172) {
 				mode = 0;
 				dot = 0;
-
+				render_sprites();
 				check_stat_int();
 			}
 			break;
 
 		case 0:
-			if (dot >= 204) {
+			if (dot == 204) {
 				wly += (wx < 167 && wy < 144);
 				dot = 0;
 				lx = 0;
@@ -215,7 +280,7 @@ void PPU::tick()
 			break;
 
 		case 1:
-			if (dot >= 456) {
+			if (dot == 456) {
 				if (ly == 153) {
 					ly = 0;
 					lx = 0;
@@ -238,10 +303,11 @@ void PPU::tick()
 void PPU::render()
 {
 	std::map<uint8_t, SDL_Color> id2rgb = {
-		{0, {0xFF, 0xFF, 0xFF, 0xFF}},
-		{1, {0xA9, 0xA9, 0xA9, 0xFF}},
-		{2, {0x54, 0x54, 0x54, 0xFF}},
-		{3, {0x00, 0x00, 0x00, 0xFF}}
+		//e0f8d0
+		{0, {0xE0, 0xF8, 0xD0, 0xFF}},
+		{1, {0x88, 0xC0, 0x70, 0xFF}},
+		{2, {0x34, 0x68, 0x56, 0xFF}},
+		{3, {0x08, 0x18, 0x20, 0xFF}}
 	};
 
 	SDL_SetRenderDrawColor(ren, 255, 255, 255, 255);

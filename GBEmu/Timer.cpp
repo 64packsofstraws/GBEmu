@@ -1,7 +1,7 @@
 #include "Timer.h"
 #include "GB.h"
 
-uint8_t Timer::get_tac_idx(uint8_t sel)
+uint8_t Timer::get_tac_idx()
 {
 	switch (tac & 0x3) {
 		case 0: return 9;
@@ -39,9 +39,9 @@ void Timer::tick()
 {
 	uint8_t prev_bit, cur_bit;
 
-	prev_bit = (div >> get_tac_idx(tac & 0x3)) & 1;
+	prev_bit = (div >> get_tac_idx()) & 1;
 	div += 4;
-	cur_bit = (div >> get_tac_idx(tac & 0x3)) & 1;
+	cur_bit = (div >> get_tac_idx()) & 1;
 
 	if (delay && tima == 0) {
 		tima = tma;
@@ -71,14 +71,14 @@ void Timer::write_timer(uint16_t addr, uint8_t val)
 		case 0xFF04: {
 			uint8_t prev_bit;
 
-			prev_bit = (div >> get_tac_idx(tac & 0x3)) & 1;
+			prev_bit = (div >> get_tac_idx()) & 1;
 
 			div = 0;
 
 			if (tima_enable && prev_bit == 1)
 				tima_tick();
 		}
-				   break;
+		break;
 
 		case 0xFF05: tima = val; break;
 		case 0xFF06: tma = val; break;
@@ -86,9 +86,9 @@ void Timer::write_timer(uint16_t addr, uint8_t val)
 		case 0xFF07: {
 			uint8_t prev_bit, cur_bit;
 
-			prev_bit = (div >> get_tac_idx(tac & 0x3)) & 1;
+			prev_bit = (div >> get_tac_idx()) & 1;
 			tac = val & 0x7;
-			cur_bit = (div >> get_tac_idx(tac & 0x3)) & 1;
+			cur_bit = (div >> get_tac_idx()) & 1;
 
 			tima_enable = (tac >> 2) & 1;
 
