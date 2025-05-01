@@ -1,6 +1,9 @@
 #pragma once
 #include <cstdint>
 #include <vector>
+#include <chrono>
+
+using std::chrono::system_clock;
 
 class MBC
 {
@@ -34,6 +37,27 @@ class MBC1 : public MBC
 	uint8_t rom_bank_size;
 public:
 	MBC1(std::vector<uint8_t> _rom, std::vector<uint8_t> _ram);
+
+	uint8_t cart_read(uint16_t addr);
+	void cart_write(uint16_t addr, uint8_t val);
+};
+
+class MBC3 : public MBC
+{
+	bool ram_rtc_enable;
+	uint8_t rom_bank_num;
+	uint8_t ram_rtc_num;
+	uint8_t rom_bank_size;
+	
+	system_clock::time_point tpoint;
+	uint64_t rtc_base;
+	
+	uint8_t rtc_s;
+	uint8_t rtc_m;
+	uint8_t rtc_h;
+	uint16_t rtc_day;
+public:
+	MBC3(std::vector<uint8_t> _rom, std::vector<uint8_t> _ram);
 
 	uint8_t cart_read(uint16_t addr);
 	void cart_write(uint16_t addr, uint8_t val);

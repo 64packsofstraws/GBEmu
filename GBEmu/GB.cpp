@@ -30,10 +30,13 @@ GB::GB(const char* filename) : cpu(this), mmu(this), timer(this), io(this), joyp
 
 	f.read((char*)rom.data(), rom_size);
 
-	switch (header[0x47]) {
-		case 0: mbc = std::make_unique<MBC0>(rom, ram); break;
-		case 1: mbc = std::make_unique<MBC1>(rom, ram); break;
-	}
+	uint8_t cart_type = header[0x47];
+	if (cart_type == 0)
+		mbc = std::make_unique<MBC0>(rom, ram);
+	if (cart_type >= 1 && cart_type <= 3)
+		mbc = std::make_unique<MBC1>(rom, ram);
+	if (cart_type >= 0xF && cart_type <= 0x13)
+		mbc = std::make_unique<MBC3>(rom, ram); 
 
 	f.close();
 }
