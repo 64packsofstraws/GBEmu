@@ -13,7 +13,7 @@ uint8_t MBC0::cart_read(uint16_t addr) {
 }
 
 void MBC0::cart_write(uint16_t addr, uint8_t val) {
-	// fuck you
+	// you cant write data to rom, dumbass
 }
 
 MBC1::MBC1(std::vector<uint8_t> _rom, std::vector<uint8_t> _ram) : MBC(std::move(_rom), std::move(_ram))
@@ -128,6 +128,7 @@ void MBC3::cart_write(uint16_t addr, uint8_t val)
 			auto elapsed = system_clock::now() - tpoint;
 			rtc_base += elapsed.count();
 			uint64_t tmp = rtc_base;
+			uint16_t prev_rtc_day = rtc_day & 0x1FF;
 
 			rtc_day = (rtc_day & (~0x1FF)) | (tmp / 86400) & 0x1FF;
 			
@@ -140,7 +141,7 @@ void MBC3::cart_write(uint16_t addr, uint8_t val)
 			tmp %= 60;
 			rtc_s = tmp;
 
-			if ((rtc_day & 0x1FF) > 0x1FF) rtc_day |= (1 << 15);
+			if (prev_rtc_day == 0x1FF && (rtc_day & 0x1FF) == 0) rtc_day |= (1 << 15);
 		}
 
 		prev_byte = val;
