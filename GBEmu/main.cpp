@@ -3,7 +3,8 @@
 
 int main(int argc, char** argv)
 {
-	GB gb("C:\\Users\\Aaron Straw\\Downloads\\gbroms\\pokemonred.gb");
+	// replace this path with something else
+	GB gb("roms/zelda.gb");
 	gb.run();
 
 	return 0;
