@@ -6,11 +6,11 @@ This emulator only compiles and runs on Windows but I will make it cross-platfor
 Also, feel free to let me know if you have a better name for this emulator.
 
 # Some screenshots
-## Tetris
+### Tetris
 ![title](images/tetris.png)
-## Super Mario Land 2
+### Super Mario Land 2
 ![title](images/sml2.png)
-## Pokemon Red
+### Pokemon Red
 ![title](images/pokemonred.png)
-## Zelda: Link's Awakening
+### Zelda: Link's Awakening
 ![title](images/zelda.png)
