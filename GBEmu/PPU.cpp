@@ -8,7 +8,7 @@ PPU::PPU(GB* gb) : gb(gb), vram(8192, 0), oam(0xA0, 0), framebuf(160 * 144, 0)
 	lyc = ly = lx = 0;
 	scy = scx = 0;
 	wx = wy = wly = 0;
-	mode = 2;
+	mode = OAM_SCAN;
 	dot = 0;
 	bgp = 0;
 	dma = 0;
@@ -50,12 +50,12 @@ void PPU::iowrite(uint16_t addr, uint8_t val)
 
 			if (!(val & 0x80)) {
 				lx = ly = dot = 0;
-				mode = 0;
+				mode = HBLANK;
 				stat &= (~0x3);
 			}
 
 			if ((val & 0x80) && !(lcdc & 0x80)) {
-				mode = 2;
+				mode = OAM_SCAN;
 				cmp_lyc_ly();
 				check_stat_int();
 			}
@@ -196,16 +196,16 @@ void PPU::tick()
 	dot++;
 
 	switch (mode) {
-		case 2:
+		case OAM_SCAN:
 			if (dot == 80) {
-				mode = 3;
+				mode = PIXEL_TRANSFER;
 				dot = 0;
 				stat = (stat & ~0x3) | mode;
 				oam_scan();
 			}
 			break;
 
-		case 3:
+		case PIXEL_TRANSFER:
 			if (dot >= 12 && lx < 160) {
 				uint16_t tilemap_base;
 				uint8_t x, y;
@@ -215,7 +215,7 @@ void PPU::tick()
 					lx++;
 
 					if (dot == 172) {
-						mode = 0;
+						mode = HBLANK;
 						dot = 0;
 
 						check_stat_int();
@@ -250,21 +250,21 @@ void PPU::tick()
 			}
 
 			if (dot == 172) {
-				mode = 0;
+				mode = HBLANK;
 				dot = 0;
 				render_sprites();
 				check_stat_int();
 			}
 			break;
 
-		case 0:
+		case HBLANK:
 			if (dot == 204) {
 				wly += (wx < 167 && wy < 144);
 				dot = 0;
 				lx = 0;
 
 				if (ly == 143) {
-					mode = 1;
+					mode = VBLANK;
 					wly = 0;
 					frame_ready = true;
 
@@ -272,7 +272,7 @@ void PPU::tick()
 					check_stat_int();
 				}
 				else {
-					mode = 2;
+					mode = OAM_SCAN;
 					check_stat_int();
 				}
 
@@ -281,12 +281,12 @@ void PPU::tick()
 			}
 			break;
 
-		case 1:
+		case VBLANK:
 			if (dot == 456) {
 				if (ly == 153) {
 					ly = 0;
 					lx = 0;
-					mode = 2;
+					mode = OAM_SCAN;
 					dot = 0;
 
 					cmp_lyc_ly();

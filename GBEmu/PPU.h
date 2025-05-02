@@ -40,7 +40,12 @@ class PPU
 
 	uint8_t bgp;
 
-	uint8_t mode;
+	enum Mode : uint8_t {
+		HBLANK,
+		VBLANK,
+		OAM_SCAN,
+		PIXEL_TRANSFER
+	} mode;
 
 	int dot;
 	uint8_t lx;
