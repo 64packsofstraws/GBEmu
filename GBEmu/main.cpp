@@ -1,4 +1,3 @@
-#include <iostream>
 #include "GB.h"
 
 int main(int argc, char** argv)
