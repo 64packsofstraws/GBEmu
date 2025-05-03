@@ -177,9 +177,17 @@ void PPU::render_sprites()
 			bool b1 = (p1 & xdir) != 0;
 			bool b2 = (p2 & xdir) != 0;
 			
-			uint8_t id = (b2 << 1) | b1;
+			uint8_t obj_id = (b2 << 1) | b1;
+			uint8_t bg_id = framebuf[idx(x + j, ly)];
 
-			if (id) framebuf[idx(x + j, ly)] = id;
+			if (obj_id) {
+				if (!(i.flags & 0x80)) {
+					framebuf[idx(x + j, ly)] = obj_id;
+				}
+				else {
+					if (bg_id == 0) framebuf[idx(x + j, ly)] = obj_id;
+				}
+			}
 		}
 	}
 	active_obj.clear();
