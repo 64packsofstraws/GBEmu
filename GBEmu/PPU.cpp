@@ -162,15 +162,20 @@ void PPU::render_sprites()
 		uint8_t y = i.y - 16;
 		
 		if (lcdc & 0x4) {
-			tileid = (ly - y >= 8) ? i.tileid | 0x1 : i.tileid & 0xFE;
+			if (i.flags & 0x40) {
+				tileid = (ly - y >= 8) ? i.tileid & 0xFE : i.tileid | 0x1;
+			}
+			else {
+				tileid = (ly - y >= 8) ? i.tileid | 0x1 : i.tileid & 0xFE;
+			}
 		}
 		else {
 			tileid = i.tileid;
 		}
 
-		uint8_t ydir = (i.flags & 0x40) ? 7 - (ly - y) : (ly - y);
+		uint8_t ydir = (i.flags & 0x40) ? 7 - ((ly - y) % 8) : ((ly - y) % 8);
 
-		uint16_t tileoff = tileid * 16 + 2 * (ydir % 8);
+		uint16_t tileoff = tileid * 16 + 2 * ydir;
 
 		uint8_t p1 = vram[tileoff];
 		uint8_t p2 = vram[tileoff + 1];
