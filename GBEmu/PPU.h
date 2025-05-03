@@ -39,6 +39,8 @@ class PPU
 	uint8_t wly;
 
 	uint8_t bgp;
+	uint8_t obp0;
+	uint8_t obp1;
 
 	enum Mode : uint8_t {
 		HBLANK,

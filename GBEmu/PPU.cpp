@@ -10,7 +10,7 @@ PPU::PPU(GB* gb) : gb(gb), vram(8192, 0), oam(0xA0, 0), framebuf(160 * 144, 0)
 	wx = wy = wly = 0;
 	mode = OAM_SCAN;
 	dot = 0;
-	bgp = 0;
+	bgp = obp0 = obp1 = 0;
 	dma = 0;
 	frame_ready = false;
 
@@ -36,6 +36,8 @@ uint8_t PPU::ioread(uint16_t addr)
 		case 0xFF45: return lyc;
 		case 0xFF56: return dma;
 		case 0xFF47: return bgp;
+		case 0xFF48: return obp0;
+		case 0xFF49: return obp1;
 		case 0xFF4A: return wy;
 		case 0xFF4B: return wx;
 	}
@@ -69,6 +71,8 @@ void PPU::iowrite(uint16_t addr, uint8_t val)
 		case 0xFF45: lyc = val; cmp_lyc_ly();  break;
 		case 0xFF46: dma = val; dma_transfer(); break;
 		case 0xFF47: bgp = val; break;
+		case 0xFF48: obp0 = val; break;
+		case 0xFF49: obp1 = val; break;
 		case 0xFF4A: wy = val; break;
 		case 0xFF4B: wx = val; break;
 	}
@@ -180,7 +184,9 @@ void PPU::render_sprites()
 			uint8_t obj_id = (b2 << 1) | b1;
 			uint8_t bg_id = framebuf[idx(x + j, ly)];
 
-			if (obj_id) {
+			obj_id += (i.flags & 0x10) ? 8 : 4;
+
+			if (obj_id & 0x3) {
 				if (!(i.flags & 0x80)) {
 					framebuf[idx(x + j, ly)] = obj_id;
 				}
@@ -325,9 +331,20 @@ void PPU::render()
 
 	for (int y = 0; y < 144; y++) {
 		for (int x = 0; x < 160; x++) {
+			SDL_Color rgb;
+			uint8_t palette_data;
 			uint8_t id = framebuf[idx(x, y)];
 
-			SDL_Color rgb = id2rgb[(bgp >> (id * 2)) & 0x3];
+			if (id > 3) {
+				palette_data = (id >= 8) ? obp1 : obp0;
+			}
+			else {
+				palette_data = bgp;
+			}
+
+			id &= 0x3;
+
+			rgb = id2rgb[(palette_data >> (id * 2)) & 0x3];
 
 			SDL_SetRenderDrawColor(ren, rgb.r, rgb.g, rgb.b, rgb.a);
 			SDL_RenderFillRect(ren, &rect);
