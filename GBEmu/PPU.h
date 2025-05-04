@@ -54,9 +54,6 @@ class PPU
 
 	uint8_t dma;
 
-	SDL_Window* win;
-	SDL_Renderer* ren;
-
 	void cmp_lyc_ly();
 	void check_stat_int();
 
@@ -66,6 +63,10 @@ class PPU
 
 	uint16_t get_tile(uint8_t off);
 public:
+	SDL_Window* win;
+	SDL_Renderer* ren;
+	SDL_Texture* tex;
+	
 	bool frame_ready;
 
 	PPU(GB* gb);

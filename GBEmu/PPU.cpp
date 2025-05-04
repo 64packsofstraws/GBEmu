@@ -16,11 +16,21 @@ PPU::PPU(GB* gb) : gb(gb), vram(8192, 0), oam(0xA0, 0), framebuf(160 * 144, 0)
 
 	SDL_Init(SDL_INIT_VIDEO);
 	SDL_CreateWindowAndRenderer("GBEmu", 160 * SCALE, 144 * SCALE, 0, &win, &ren);
+	SDL_SetRenderVSync(ren, 1);
+
+	tex = SDL_CreateTexture(
+		ren,
+		SDL_PIXELFORMAT_RGBA8888,
+		SDL_TEXTUREACCESS_TARGET,
+		160 * SCALE,
+		144 * SCALE
+	);
 }
 
 PPU::~PPU()
 {
 	SDL_DestroyWindow(win);
+	SDL_DestroyTexture(tex);
 	SDL_DestroyRenderer(ren);
 	SDL_Quit();
 }
@@ -330,8 +340,10 @@ void PPU::render()
 		{3, {0x00, 0x00, 0x00, 0xFF}}
 	};
 
+	SDL_SetRenderTarget(ren, tex);
 	SDL_SetRenderDrawColor(ren, 255, 255, 255, 255);
 	SDL_RenderClear(ren);
+
 	SDL_FRect rect = {0.0, 0.0, SCALE, SCALE};
 
 	for (int y = 0; y < 144; y++) {
@@ -353,14 +365,14 @@ void PPU::render()
 
 			SDL_SetRenderDrawColor(ren, rgb.r, rgb.g, rgb.b, rgb.a);
 			SDL_RenderFillRect(ren, &rect);
-
 			rect.x += SCALE;
 		}
 		rect.x = 0;
 		rect.y += SCALE;
 	}
 
-
+	SDL_SetRenderTarget(ren, nullptr);
+	SDL_RenderTexture(ren, tex, nullptr, nullptr);
 	SDL_RenderPresent(ren);
 	frame_ready = false;
 }
