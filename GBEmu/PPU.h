@@ -4,6 +4,9 @@
 #include <map>
 #include <algorithm>
 #include <SDL3/SDL.h>
+#include <imgui.h>
+#include <imgui_impl_sdl3.h>
+#include <imgui_impl_sdlrenderer3.h>
 
 #define SCALE 4
 #define idx(x, y) (y * 160 + x)

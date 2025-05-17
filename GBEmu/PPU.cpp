@@ -25,10 +25,21 @@ PPU::PPU(GB* gb) : gb(gb), vram(8192, 0), oam(0xA0, 0), framebuf(160 * 144, 0)
 		160 * SCALE,
 		144 * SCALE
 	);
+
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+
+	ImGui_ImplSDL3_InitForSDLRenderer(win, ren);
+	ImGui_ImplSDLRenderer3_Init(ren);
 }
 
 PPU::~PPU()
 {
+	ImGui_ImplSDLRenderer3_Shutdown();
+	ImGui_ImplSDL3_Shutdown();
+	ImGui::DestroyContext();
+
 	SDL_DestroyWindow(win);
 	SDL_DestroyTexture(tex);
 	SDL_DestroyRenderer(ren);
@@ -172,12 +183,10 @@ void PPU::render_sprites()
 		uint8_t y = i.y - 16;
 		
 		if (lcdc & 0x4) {
-			if (i.flags & 0x40) {
+			if (i.flags & 0x40)
 				tileid = (ly - y >= 8) ? i.tileid & 0xFE : i.tileid | 0x1;
-			}
-			else {
+			else
 				tileid = (ly - y >= 8) ? i.tileid | 0x1 : i.tileid & 0xFE;
-			}
 		}
 		else {
 			tileid = i.tileid;
@@ -340,9 +349,9 @@ void PPU::render()
 		{3, {0x00, 0x00, 0x00, 0xFF}}
 	};
 
-	SDL_SetRenderTarget(ren, tex);
 	SDL_SetRenderDrawColor(ren, 255, 255, 255, 255);
 	SDL_RenderClear(ren);
+	SDL_SetRenderTarget(ren, tex);
 
 	SDL_FRect rect = {0.0, 0.0, SCALE, SCALE};
 
@@ -371,8 +380,28 @@ void PPU::render()
 		rect.y += SCALE;
 	}
 
+	ImGui_ImplSDLRenderer3_NewFrame();
+	ImGui_ImplSDL3_NewFrame();
+	ImGui::NewFrame();
+
+	if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
+		ImGui::OpenPopup("popup");
+	}
+
+	if (ImGui::BeginPopup("popup")) {
+		if (ImGui::MenuItem("Open ROM")) {
+			gb->load_file();
+		}
+		ImGui::EndPopup();
+	}
+
+	ImGui::Render();
+	
 	SDL_SetRenderTarget(ren, nullptr);
 	SDL_RenderTexture(ren, tex, nullptr, nullptr);
+
+	ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), ren);
 	SDL_RenderPresent(ren);
+
 	frame_ready = false;
 }

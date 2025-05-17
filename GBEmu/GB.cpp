@@ -1,13 +1,77 @@
 #include "GB.h"
 
-GB::GB(const char* filename) : cpu(this), mmu(this), timer(this), io(this), joyp(this), ppu(this)
+GB::GB() : cpu(this), mmu(this), timer(this), io(this), joyp(this), ppu(this)
 {
-	std::ifstream f(filename, std::ios::binary);
+	
+}
 
-	if (!f) {
-		MessageBoxA(NULL, "ROM doesn't exist", "Error", MB_ICONERROR);
-		exit(1);
+bool GB::idle_loop()
+{
+	SDL_Event e;
+	bool running = true;
+
+	while (running) {
+		while (SDL_PollEvent(&e)) {
+			switch (e.type) {
+			case SDL_EVENT_QUIT:
+				running = false;
+				break;
+			}
+			ImGui_ImplSDL3_ProcessEvent(&e);
+		}
+
+		SDL_SetRenderDrawColor(ppu.ren, 0, 0, 0, 255);
+		SDL_RenderClear(ppu.ren);
+		SDL_SetRenderTarget(ppu.ren, ppu.tex);
+
+		ImGui_ImplSDLRenderer3_NewFrame();
+		ImGui_ImplSDL3_NewFrame();
+		ImGui::NewFrame();
+
+		if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
+			ImGui::OpenPopup("popup");
+		}
+
+		if (ImGui::BeginPopupContextItem("popup")) {
+			if (ImGui::MenuItem("Open ROM")) {
+				running = !load_file();
+			}
+			ImGui::End();
+		}
+
+		ImGui::Render();
+
+		SDL_SetRenderTarget(ppu.ren, nullptr);
+		SDL_RenderTexture(ppu.ren, ppu.tex, nullptr, nullptr);
+
+		ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), ppu.ren);
+		SDL_RenderPresent(ppu.ren);
 	}
+	return running;
+}
+
+bool GB::load_file()
+{
+	OPENFILENAMEA ofn;
+	char szFile[260] = { 0 };
+
+	ZeroMemory(&ofn, sizeof(ofn));
+	ofn.lStructSize = sizeof(ofn);
+	ofn.hwndOwner = NULL;
+	ofn.lpstrFile = szFile;
+	ofn.nMaxFile = sizeof(szFile);
+	ofn.lpstrFilter = ("GB ROMs\0*.gb\0");
+	ofn.nFilterIndex = 1;
+	ofn.lpstrFileTitle = NULL;
+	ofn.nMaxFileTitle = 0;
+	ofn.lpstrInitialDir = NULL;
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+
+	if (!GetOpenFileNameA(&ofn)) {
+		return false;
+	}
+
+	std::ifstream f(ofn.lpstrFile, std::ios::binary);
 
 	uint8_t header[0x50];
 	size_t rom_size, ram_size;
@@ -41,8 +105,16 @@ GB::GB(const char* filename) : cpu(this), mmu(this), timer(this), io(this), joyp
 		mbc = std::make_unique<MBC3>(rom, ram); 
 
 	f.close();
-}
 
+	std::string title = ofn.lpstrFile;
+
+	title = title.substr(title.find_last_of('\\') + 1);
+
+	SDL_SetWindowTitle(ppu.win, ("GBEmu - " + title).c_str());
+
+	cpu.reset();
+	return true;
+}
 void GB::run()
 {
 	bool running = true;
@@ -60,6 +132,7 @@ void GB::run()
 				case SDL_EVENT_KEY_UP:
 					joyp.update_joyp(e.type, e.key.key);
 			}
+			ImGui_ImplSDL3_ProcessEvent(&e);
 		}
 
 		cpu.step();

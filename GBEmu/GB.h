@@ -21,7 +21,8 @@ public:
 	Timer timer;
 	IO io;
 
-	GB(const char* filename);
-
+	GB();
+	bool idle_loop();
+	bool load_file();
 	void run();
 };

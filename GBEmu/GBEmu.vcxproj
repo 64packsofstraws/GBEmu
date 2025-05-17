@@ -71,8 +71,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>C:\Users\Aaron Straw\OneDrive\Documents\Libs\SDL3-3.2.8\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\Aaron Straw\OneDrive\Documents\Libs\SDL3-3.2.8\lib\x64;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Users\Aaron Straw\OneDrive\Documents\Libs\imgui\backends;C:\Users\Aaron Straw\OneDrive\Documents\Libs\imgui;C:\Users\Aaron Straw\OneDrive\Documents\Libs\SDL3-3.2.8\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\Aaron Straw\OneDrive\Documents\Libs\imgui\backends;C:\Users\Aaron Straw\OneDrive\Documents\Libs\SDL3-3.2.8\lib\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -143,6 +143,13 @@
     <ClInclude Include="Timer.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\..\OneDrive\Documents\Libs\imgui\backends\imgui_impl_sdl3.cpp" />
+    <ClCompile Include="..\..\..\..\OneDrive\Documents\Libs\imgui\backends\imgui_impl_sdlrenderer3.cpp" />
+    <ClCompile Include="..\..\..\..\OneDrive\Documents\Libs\imgui\imgui.cpp" />
+    <ClCompile Include="..\..\..\..\OneDrive\Documents\Libs\imgui\imgui_demo.cpp" />
+    <ClCompile Include="..\..\..\..\OneDrive\Documents\Libs\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\..\..\..\OneDrive\Documents\Libs\imgui\imgui_tables.cpp" />
+    <ClCompile Include="..\..\..\..\OneDrive\Documents\Libs\imgui\imgui_widgets.cpp" />
     <ClCompile Include="CPU.cpp" />
     <ClCompile Include="CPU_Instructions.cpp" />
     <ClCompile Include="GB.cpp" />

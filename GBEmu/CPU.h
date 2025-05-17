@@ -134,11 +134,9 @@ class CPU
 	uint8_t next_byte();
 	uint16_t next_word();
 
-	void reset();
 
 	uint8_t handle_int();
 public:
-
 	CPU(GB* gb);
 
 	uint8_t read_wram(uint16_t addr);
@@ -155,4 +153,5 @@ public:
 	void write_ie(uint8_t val);
 
 	void step();
+	void reset();
 };
