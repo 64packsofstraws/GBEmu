@@ -3,16 +3,7 @@
 
 PPU::PPU(GB* gb) : gb(gb), vram(8192, 0), oam(0xA0, 0), framebuf(160 * 144, 0)
 {
-	lcdc = 0x91;
-	stat = 0x84;
-	lyc = ly = lx = 0;
-	scy = scx = 0;
-	wx = wy = wly = 0;
-	mode = OAM_SCAN;
-	dot = 0;
-	bgp = obp0 = obp1 = 0;
-	dma = 0;
-	frame_ready = false;
+	reset();
 
 	SDL_Init(SDL_INIT_VIDEO);
 	SDL_CreateWindowAndRenderer("GBEmu", 160 * SCALE, 144 * SCALE, 0, &win, &ren);
@@ -403,5 +394,19 @@ void PPU::render()
 	ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), ren);
 	SDL_RenderPresent(ren);
 
+	frame_ready = false;
+}
+
+void PPU::reset()
+{
+	lcdc = 0x91;
+	stat = 0x84;
+	lyc = ly = lx = 0;
+	scy = scx = 0;
+	wx = wy = wly = 0;
+	mode = OAM_SCAN;
+	dot = 0;
+	bgp = obp0 = obp1 = 0;
+	dma = 0;
 	frame_ready = false;
 }

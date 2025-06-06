@@ -5,16 +5,16 @@ GB::GB() : cpu(this), mmu(this), timer(this), io(this), joyp(this), ppu(this)
 	
 }
 
-bool GB::idle_loop()
+int GB::idle_loop()
 {
 	SDL_Event e;
-	bool running = true;
+	int state = 1;
 
-	while (running) {
+	while (state > 0) {
 		while (SDL_PollEvent(&e)) {
 			switch (e.type) {
 			case SDL_EVENT_QUIT:
-				running = false;
+				state = -1;
 				break;
 			}
 			ImGui_ImplSDL3_ProcessEvent(&e);
@@ -34,7 +34,7 @@ bool GB::idle_loop()
 
 		if (ImGui::BeginPopupContextItem("popup")) {
 			if (ImGui::MenuItem("Open ROM")) {
-				running = !load_file();
+				state = !load_file();
 			}
 			ImGui::End();
 		}
@@ -47,7 +47,7 @@ bool GB::idle_loop()
 		ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), ppu.ren);
 		SDL_RenderPresent(ppu.ren);
 	}
-	return running;
+	return state;
 }
 
 bool GB::load_file()
@@ -113,6 +113,7 @@ bool GB::load_file()
 	SDL_SetWindowTitle(ppu.win, ("GBEmu - " + title).c_str());
 
 	cpu.reset();
+	ppu.reset();
 	return true;
 }
 void GB::run()

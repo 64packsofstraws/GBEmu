@@ -22,7 +22,7 @@ public:
 	IO io;
 
 	GB();
-	bool idle_loop();
+	int idle_loop();
 	bool load_file();
 	void run();
 };

@@ -86,6 +86,7 @@ public:
 
 	void tick();
 	void render();
+	void reset();
 };
 
 
