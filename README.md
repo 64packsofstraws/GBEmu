@@ -14,5 +14,5 @@ Also, feel free to let me know if you have a better name for this emulator.
 ![title](images/pokemonred.png)
 ### Zelda: Link's Awakening
 ![title](images/zelda.png)
-### Zelda: Dr. Mario
+### Dr. Mario
 ![title](images/drmario.png)
