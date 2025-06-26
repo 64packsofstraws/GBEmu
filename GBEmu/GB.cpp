@@ -120,9 +120,15 @@ void GB::run()
 {
 	bool running = true;
 	SDL_Event e;
-	Uint64 tick = SDL_GetTicks();
 
 	while (running) {
+		Uint64 tick = SDL_GetTicks();
+		
+		while (!ppu.frame_ready)
+			cpu.step();
+
+		ppu.render();
+
 		while (SDL_PollEvent(&e)) {
 			switch (e.type) {
 				case SDL_EVENT_QUIT:
@@ -136,18 +142,9 @@ void GB::run()
 			ImGui_ImplSDL3_ProcessEvent(&e);
 		}
 
-		cpu.step();
+		Uint64 elapsed = SDL_GetTicks() - tick;
 
-		if (ppu.frame_ready) {
-			ppu.render();
-
-			Uint64 elapsed = SDL_GetTicks() - tick;
-
-			if (elapsed < 16) {
-				SDL_Delay(16 - elapsed);
-
-				tick = SDL_GetTicks();
-			}
-		}
+		if (elapsed > (1000 / 60))
+			SDL_Delay(elapsed - (1000 / 60));
 	}
 }
