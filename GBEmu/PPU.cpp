@@ -1,7 +1,7 @@
 #include "PPU.h"
 #include "GB.h"
 
-PPU::PPU(GB* gb) : gb(gb), vram(8192, 0), oam(0xA0, 0), framebuf(160 * 144, 0)
+PPU::PPU(GB* gb) : gb(gb), vram(8192, 0), oam(0xA0, 0), framebuf(160 * 144, 0xFFFFFFFF)
 {
 	reset();
 
@@ -9,13 +9,20 @@ PPU::PPU(GB* gb) : gb(gb), vram(8192, 0), oam(0xA0, 0), framebuf(160 * 144, 0)
 	SDL_CreateWindowAndRenderer("GBEmu", 160 * SCALE, 144 * SCALE, 0, &win, &ren);
 	SDL_SetRenderVSync(ren, 1);
 
+	palettes[0] = 0xFFFFFFFF;
+	palettes[1] = 0xA9A9A9FF;
+	palettes[2] = 0x545454FF;
+	palettes[3] = 0x000000FF;
+
 	tex = SDL_CreateTexture(
 		ren,
 		SDL_PIXELFORMAT_RGBA8888,
-		SDL_TEXTUREACCESS_TARGET,
-		160 * SCALE,
-		144 * SCALE
+		SDL_TEXTUREACCESS_STREAMING,
+		160,
+		144
 	);
+
+	SDL_SetTextureScaleMode(tex, SDL_SCALEMODE_NEAREST);
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -197,16 +204,14 @@ void PPU::render_sprites()
 			bool b2 = (p2 & xdir) != 0;
 			
 			uint8_t obj_id = (b2 << 1) | b1;
-			uint8_t bg_id = framebuf[idx(x + j, ly)];
+			uint32_t bg = framebuf[idx(x + j, ly)];
 
-			obj_id += (i.flags & 0x10) ? 8 : 4;
+			uint8_t obp = (i.flags & 0x10) ? obp1 : obp0;
+			uint32_t pal_data = palettes[(obp >> (2 * obj_id)) & 0x3];
 
 			if (obj_id & 0x3) {
-				if (!(i.flags & 0x80)) {
-					framebuf[idx(x + j, ly)] = obj_id;
-				}
-				else {
-					if (bg_id == 0) framebuf[idx(x + j, ly)] = obj_id;
+				if (!(i.flags & 0x80) || bg == 0xFFFFFFFF) {
+					framebuf[idx(x + j, ly)] = pal_data;
 				}
 			}
 		}
@@ -240,7 +245,7 @@ void PPU::tick()
 				uint8_t x, y;
 
 				if (!(lcdc & 1)) {
-					framebuf[idx(lx, ly)] = 0;
+					framebuf[idx(lx, ly)] = 0xFFFFFFFF;
 					lx++;
 
 					if (dot == 172) {
@@ -272,8 +277,9 @@ void PPU::tick()
 
 				bool b1 = ( p1 & ( 0x80 >> (x % 8) )) != 0;
 				bool b2 = ( p2 & ( 0x80 >> (x % 8) )) != 0;
+				uint8_t id = (b2 << 1) | b1;
 
-				framebuf[idx(lx, ly)] = (b2 << 1) | b1;
+				framebuf[idx(lx, ly)] = palettes[(bgp >> (2 * id)) & 0x3];
 
 				lx++;
 			}
@@ -333,43 +339,8 @@ void PPU::tick()
 
 void PPU::render()
 {
-	std::map<uint8_t, SDL_Color> id2rgb = {
-		{0, {0xFF, 0xFF, 0xFF, 0xFF}},
-		{1, {0xA9, 0xA9, 0xA9, 0xFF}},
-		{2, {0x54, 0x54, 0x54, 0xFF}},
-		{3, {0x00, 0x00, 0x00, 0xFF}}
-	};
-
-	SDL_SetRenderDrawColor(ren, 255, 255, 255, 255);
+	SDL_UpdateTexture(tex, NULL, framebuf.data(), 160 * sizeof(uint32_t));
 	SDL_RenderClear(ren);
-	SDL_SetRenderTarget(ren, tex);
-
-	SDL_FRect rect = {0.0, 0.0, SCALE, SCALE};
-
-	for (int y = 0; y < 144; y++) {
-		for (int x = 0; x < 160; x++) {
-			SDL_Color rgb;
-			uint8_t palette_data;
-			uint8_t id = framebuf[idx(x, y)];
-
-			if (id > 3) {
-				palette_data = (id >= 8) ? obp1 : obp0;
-			}
-			else {
-				palette_data = bgp;
-			}
-
-			id &= 0x3;
-
-			rgb = id2rgb[(palette_data >> (id * 2)) & 0x3];
-
-			SDL_SetRenderDrawColor(ren, rgb.r, rgb.g, rgb.b, rgb.a);
-			SDL_RenderFillRect(ren, &rect);
-			rect.x += SCALE;
-		}
-		rect.x = 0;
-		rect.y += SCALE;
-	}
 
 	ImGui_ImplSDLRenderer3_NewFrame();
 	ImGui_ImplSDL3_NewFrame();
@@ -388,7 +359,6 @@ void PPU::render()
 
 	ImGui::Render();
 	
-	SDL_SetRenderTarget(ren, nullptr);
 	SDL_RenderTexture(ren, tex, nullptr, nullptr);
 
 	ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), ren);

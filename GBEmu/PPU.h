@@ -19,7 +19,7 @@ class PPU
 	std::vector<uint8_t> vram;
 	std::vector<uint8_t> oam;
 
-	std::vector<uint8_t> framebuf;
+	std::vector<uint32_t> framebuf;
 
 	struct ObjEntry {
 		uint8_t x;
@@ -29,6 +29,8 @@ class PPU
 	};
 
 	std::vector<ObjEntry> active_obj;
+
+	uint32_t palettes[4];
 	
 	uint8_t lcdc;
 	uint8_t ly;

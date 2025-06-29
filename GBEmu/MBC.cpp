@@ -13,7 +13,7 @@ uint8_t MBC0::cart_read(uint16_t addr) {
 }
 
 void MBC0::cart_write(uint16_t addr, uint8_t val) {
-	// you cant write data to rom, dumbass
+
 }
 
 MBC1::MBC1(std::vector<uint8_t> _rom, std::vector<uint8_t> _ram) : MBC(std::move(_rom), std::move(_ram))
