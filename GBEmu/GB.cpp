@@ -52,26 +52,17 @@ int GB::idle_loop()
 
 bool GB::load_file()
 {
-	OPENFILENAMEA ofn;
-	char szFile[260] = { 0 };
+	nfdchar_t* out_path = NULL;
+	const nfdchar_t* filter = "gb,gbc";
 
-	ZeroMemory(&ofn, sizeof(ofn));
-	ofn.lStructSize = sizeof(ofn);
-	ofn.hwndOwner = NULL;
-	ofn.lpstrFile = szFile;
-	ofn.nMaxFile = sizeof(szFile);
-	ofn.lpstrFilter = ("GB ROMs\0*.gb\0");
-	ofn.nFilterIndex = 1;
-	ofn.lpstrFileTitle = NULL;
-	ofn.nMaxFileTitle = 0;
-	ofn.lpstrInitialDir = NULL;
-	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+	nfdresult_t result = NFD_OpenDialog(filter, NULL, &out_path);
 
-	if (!GetOpenFileNameA(&ofn)) {
+	if (result == NFD_ERROR || result == NFD_CANCEL) {
+		free(out_path);
 		return false;
 	}
 
-	std::ifstream f(ofn.lpstrFile, std::ios::binary);
+	std::ifstream f(out_path, std::ios::binary);
 
 	uint8_t header[0x50];
 	size_t rom_size, ram_size;
@@ -106,7 +97,7 @@ bool GB::load_file()
 
 	f.close();
 
-	std::string title = ofn.lpstrFile;
+	std::string title = out_path;
 
 	title = title.substr(title.find_last_of('\\') + 1);
 
@@ -114,6 +105,8 @@ bool GB::load_file()
 
 	cpu.reset();
 	ppu.reset();
+
+	free(out_path);
 	return true;
 }
 void GB::run()

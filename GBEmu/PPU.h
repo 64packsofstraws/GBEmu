@@ -55,12 +55,13 @@ class PPU
 	} mode;
 
 	int dot;
-	uint8_t lx;
 
 	uint8_t dma;
 
 	void cmp_lyc_ly();
 	void check_stat_int();
+
+	void render_scanline();
 
 	void dma_transfer();
 	void oam_scan();

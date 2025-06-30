@@ -70,7 +70,7 @@ void PPU::iowrite(uint16_t addr, uint8_t val)
 			if (!(val & 1)) val &= ~(1 << 5);
 
 			if (!(val & 0x80)) {
-				lx = ly = dot = 0;
+				ly = dot = 0;
 				mode = HBLANK;
 				stat &= (~0x3);
 			}
@@ -132,6 +132,43 @@ void PPU::check_stat_int()
 {
 	stat = (stat & ~(0x3)) | mode;
 	if ((stat >> (3 + mode)) & 1) gb->cpu.req_intf(1);
+}
+
+void PPU::render_scanline()
+{
+	for (int i = 0; i < 160; i++) {
+		if (!(lcdc & 1)) {
+			framebuf[idx(i, ly)] = 0xFFFFFFFF;
+			continue;
+		}
+
+		uint16_t tilemap_base;
+		uint8_t x, y;
+
+		if ((lcdc >> 5) & 1 && (wx < 167 && wy < 144) && ((i + 7) >= wx && ly >= wy)) {
+			tilemap_base = ((lcdc >> 6) & 1) ? 0x1C00 : 0x1800;
+			x = i - (wx - 7);
+			y = wly - wy;
+		}
+		else {
+			tilemap_base = ((lcdc >> 3) & 1) ? 0x1C00 : 0x1800;
+			x = (scx + i) % 256;
+			y = (scy + ly) % 256;
+		}
+
+		uint16_t tmap_idx = tilemap_base + ((y / 8) * 32 + (x / 8));
+
+		uint16_t idx = get_tile(vram[tmap_idx]) + 2 * (y % 8);
+
+		uint8_t p1 = vram[idx];
+		uint8_t p2 = vram[idx + 1];
+
+		bool b1 = ( p1 & ( 0x80 >> (x % 8) )) != 0;
+		bool b2 = ( p2 & ( 0x80 >> (x % 8) )) != 0;
+		uint8_t id = (b2 << 1) | b1;
+
+		framebuf[idx(i, ly)] = palettes[(bgp >> (2 * id)) & 0x3];
+	}
 }
 
 void PPU::dma_transfer()
@@ -240,53 +277,11 @@ void PPU::tick()
 			break;
 
 		case PIXEL_TRANSFER:
-			if (dot >= 12 && lx < 160) {
-				uint16_t tilemap_base;
-				uint8_t x, y;
-
-				if (!(lcdc & 1)) {
-					framebuf[idx(lx, ly)] = 0xFFFFFFFF;
-					lx++;
-
-					if (dot == 172) {
-						mode = HBLANK;
-						dot = 0;
-
-						check_stat_int();
-					}
-					return;
-				}
-
-				if ((lcdc >> 5) & 1 && (wx < 167 && wy < 144) && ((lx + 7) >= wx && ly >= wy)) {
-					tilemap_base = ((lcdc >> 6) & 1) ? 0x1C00 : 0x1800;
-					x = lx - (wx - 7);
-					y = wly - wy;
-				}
-				else {
-					tilemap_base = ((lcdc >> 3) & 1) ? 0x1C00 : 0x1800;
-					x = (scx + lx) % 256;
-					y = (scy + ly) % 256;
-				}
-
-				uint16_t tmap_idx = tilemap_base + ((y / 8) * 32 + (x / 8));
-
-				uint16_t idx = get_tile(vram[tmap_idx]) + 2 * (y % 8);
-
-				uint8_t p1 = vram[idx];
-				uint8_t p2 = vram[idx + 1];
-
-				bool b1 = ( p1 & ( 0x80 >> (x % 8) )) != 0;
-				bool b2 = ( p2 & ( 0x80 >> (x % 8) )) != 0;
-				uint8_t id = (b2 << 1) | b1;
-
-				framebuf[idx(lx, ly)] = palettes[(bgp >> (2 * id)) & 0x3];
-
-				lx++;
-			}
-
 			if (dot == 172) {
 				mode = HBLANK;
 				dot = 0;
+
+				render_scanline();
 				render_sprites();
 				check_stat_int();
 			}
@@ -296,7 +291,6 @@ void PPU::tick()
 			if (dot == 204) {
 				wly += (wx < 167 && wy < 144);
 				dot = 0;
-				lx = 0;
 
 				if (ly == 143) {
 					mode = VBLANK;
@@ -320,7 +314,6 @@ void PPU::tick()
 			if (dot == 456) {
 				if (ly == 153) {
 					ly = 0;
-					lx = 0;
 					mode = OAM_SCAN;
 					dot = 0;
 
@@ -371,7 +364,7 @@ void PPU::reset()
 {
 	lcdc = 0x91;
 	stat = 0x84;
-	lyc = ly = lx = 0;
+	lyc = ly = 0;
 	scy = scx = 0;
 	wx = wy = wly = 0;
 	mode = OAM_SCAN;
