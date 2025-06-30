@@ -1,7 +1,6 @@
 #pragma once
 #include <fstream>
 #include <memory>
-#include <Windows.h>
 #include <nfd.h>
 #include "CPU.h"
 #include "MMU.h"
