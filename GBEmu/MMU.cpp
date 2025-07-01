@@ -10,7 +10,7 @@ uint8_t MMU::read(uint16_t addr)
     if (addr >= 0x0 && addr <= 0x7FFF) {
         return gb->mbc->cart_read(addr);
     }
-    else if (addr >= 0xA000 && addr <= 0x9FFF) {
+    else if (addr >= 0x8000 && addr <= 0x9FFF) {
         return gb->ppu.read_vram(addr);
     }
     else if (addr >= 0xA000 && addr <= 0xBFFF) {

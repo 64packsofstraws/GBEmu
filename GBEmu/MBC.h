@@ -62,3 +62,18 @@ public:
 	uint8_t cart_read(uint16_t addr);
 	void cart_write(uint16_t addr, uint8_t val);
 };
+
+class MBC5 : public MBC
+{
+	bool ram_enable;
+	uint8_t hi_rom_bank_num;
+	uint8_t lo_rom_bank_num;
+	uint8_t ram_bank_num;
+
+	uint8_t rom_bank_size;
+public:
+	MBC5(std::vector<uint8_t> _rom, std::vector<uint8_t> _ram);
+
+	uint8_t cart_read(uint16_t addr);
+	void cart_write(uint16_t addr, uint8_t val);
+};

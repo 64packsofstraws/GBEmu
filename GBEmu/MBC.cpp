@@ -168,3 +168,69 @@ void MBC3::cart_write(uint16_t addr, uint8_t val)
 		}
 	}
 }
+
+MBC5::MBC5(std::vector<uint8_t> _rom, std::vector<uint8_t> _ram) : MBC(std::move(_rom), std::move(_ram))
+{
+	hi_rom_bank_num = lo_rom_bank_num = 0;
+	ram_enable = false;
+	ram_bank_num = 0;
+
+	rom_bank_size = rom.size() / 0x4000;
+}
+
+uint8_t MBC5::cart_read(uint16_t addr)
+{
+	if (addr >= 0x0 && addr <= 0x3FFF) {
+		return rom[addr];
+	}
+	else if (addr >= 0x4000 && addr <= 0x7FFF) {
+		uint16_t rom_bank_num = (hi_rom_bank_num << 8) | lo_rom_bank_num;
+
+		int idx = (0x4000 * rom_bank_num) + (addr - 0x4000);
+		return rom[idx];
+	}
+	else if (addr >= 0xA000 && addr <= 0xBFFF && ram_enable) {
+		int idx = (0x2000 * ram_bank_num) + (addr - 0xA000);
+		return ram[idx];
+	}
+
+	return 0xFF;
+}
+
+void MBC5::cart_write(uint16_t addr, uint8_t val)
+{
+	if (addr >= 0x0 && addr <= 0x1FFF) {
+		ram_enable = (val & 0xF) == 0xA;
+	}
+	else if (addr >= 0x2000 && addr <= 0x2FFF) {
+		lo_rom_bank_num = val;
+
+		uint16_t rom_bank_num = (hi_rom_bank_num << 8) | lo_rom_bank_num;
+
+		if (rom_bank_num >= rom_bank_size) {
+			rom_bank_num &= rom_bank_size - 1;
+
+			hi_rom_bank_num = (rom_bank_num >> 8) & 1;
+			lo_rom_bank_num = rom_bank_num & 0xFF;
+		}
+	}
+	else if (addr >= 0x3000 && addr <= 0x3FFF) {
+		hi_rom_bank_num = val & 1;
+
+		uint16_t rom_bank_num = (hi_rom_bank_num << 8) | lo_rom_bank_num;
+
+		if (rom_bank_num >= rom_bank_size) {
+			rom_bank_num &= rom_bank_size - 1;
+
+			hi_rom_bank_num = (rom_bank_num >> 8) & 1;
+			lo_rom_bank_num = rom_bank_num & 0xFF;
+		}
+	}
+	else if (addr >= 0x4000 && addr <= 0x5FFF) {
+		ram_bank_num = val & 0xF;
+	}
+	else if (addr >= 0xA000 && addr <= 0xBFFF && ram_enable) {
+		int idx = (0x2000 * ram_bank_num) + (addr - 0xA000);
+		ram[idx] = val;
+	}
+}
