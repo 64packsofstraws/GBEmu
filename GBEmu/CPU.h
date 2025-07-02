@@ -30,6 +30,8 @@ class CPU
 
 	bool ime;
 
+	uint8_t svbk;
+
 	std::vector<uint8_t> wram;
 	std::vector<uint8_t> hram;
 
@@ -151,6 +153,9 @@ public:
 
 	uint8_t read_ie();
 	void write_ie(uint8_t val);
+
+	uint8_t read_svbk();
+	void write_svbk(uint8_t val);
 
 	void step();
 	void reset();

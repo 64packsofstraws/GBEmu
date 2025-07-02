@@ -14,8 +14,11 @@ uint8_t IO::io_read(uint16_t addr)
     else if (addr >= 0xFF04 && addr <= 0xFF07) {
         return gb->timer.read_timer(addr);
     }
-    else if (addr >= 0xFF40 && addr <= 0xFF4B) {
+    else if (addr >= 0xFF40 && addr <= 0xFF6B) {
         return gb->ppu.ioread(addr);
+    }
+    else if (addr == 0xFF70) {
+        return gb->cpu.read_svbk();
     }
     else if (addr == 0xFF0F) {
         return gb->cpu.read_intf();
@@ -35,7 +38,10 @@ void IO::io_write(uint16_t addr, uint8_t val)
     else if (addr == 0xFF0F) {
         gb->cpu.write_intf(val);
     }
-    else if (addr >= 0xFF40 && addr <= 0xFF4B) {
+    else if (addr >= 0xFF40 && addr <= 0xFF6B) {
         gb->ppu.iowrite(addr, val);
+    }
+    else if (addr == 0xFF70) {
+        gb->cpu.write_svbk(val);
     }
 }

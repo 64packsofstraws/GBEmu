@@ -71,8 +71,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>C:\Users\Aaron Straw\OneDrive\Documents\Libs\imgui\backends;C:\Users\Aaron Straw\OneDrive\Documents\Libs\imgui;C:\Users\Aaron Straw\OneDrive\Documents\Libs\SDL3-3.2.8\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\Aaron Straw\OneDrive\Documents\Libs\imgui\backends;C:\Users\Aaron Straw\OneDrive\Documents\Libs\SDL3-3.2.8\lib\x64;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Users\Aaron Straw\OneDrive\Documents\Libs\nativefiledialog-release_116\src\include;C:\Users\Aaron Straw\OneDrive\Documents\Libs\imgui\backends;C:\Users\Aaron Straw\OneDrive\Documents\Libs\imgui;C:\Users\Aaron Straw\OneDrive\Documents\Libs\SDL3-3.2.8\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\Aaron Straw\OneDrive\Documents\Libs\nativefiledialog-release_116\build\lib\Debug\x64;C:\Users\Aaron Straw\OneDrive\Documents\Libs\imgui\backends;C:\Users\Aaron Straw\OneDrive\Documents\Libs\SDL3-3.2.8\lib\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>C:\Users\Aaron Straw\OneDrive\Documents\Libs\nativefiledialog-release_116\src\include;C:\Users\Aaron Straw\OneDrive\Documents\Libs\imgui\backends;C:\Users\Aaron Straw\OneDrive\Documents\Libs\SDL3-3.2.8\include;C:\Users\Aaron Straw\OneDrive\Documents\Libs\imgui;$(IncludePath)</IncludePath>
@@ -117,7 +117,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL3.lib;SDL3_test.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>nfd_d.lib;SDL3.lib;SDL3_test.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

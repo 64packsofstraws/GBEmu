@@ -1,7 +1,7 @@
 #include "CPU.h"
 #include "GB.h"
 
-CPU::CPU(GB* gb) : wram(8192, 0), hram(0x80, 0), gb(gb)
+CPU::CPU(GB* gb) : wram(0x8000, 0), hram(0x80, 0), gb(gb)
 {
 	reset();
 }
@@ -14,12 +14,14 @@ void CPU::tick_components(uint8_t m)
 
 uint8_t CPU::read_wram(uint16_t addr)
 {
-	return wram[addr - 0xC000];
+	if (addr < 0xD000 || !gb->cgb) return wram[addr - 0xC000];
+	else return wram[(!svbk ? 1 : svbk) * 0x1000 + (addr - 0xD000)];
 }
 
 void CPU::write_wram(uint16_t addr, uint8_t val)
 {
-	wram[addr - 0xC000] = val;
+	if (addr < 0xD000 || !gb->cgb) wram[addr - 0xC000] = val;
+	else wram[(!svbk ? 1 : svbk) * 0x1000 + (addr - 0xD000)] = val;
 }
 
 uint8_t CPU::read_hram(uint16_t addr)
@@ -57,13 +59,26 @@ void CPU::write_ie(uint8_t val)
 	ie = val;
 }
 
+uint8_t CPU::read_svbk()
+{
+	return svbk;
+}
+
+void CPU::write_svbk(uint8_t val)
+{
+	svbk = val & 0x7;
+}
+
 void CPU::reset()
 {
-	A = B = C = D = E = H = L = 0;
+	A = 0x11;
+	B = C = D = E = H = L = 0;
 	PC = 0x100;
 	SP = 0xFFFE;
 	ime = false;
 	intf = ie = 0x0;
+
+	std::fill(wram.begin(), wram.end(), 0);
 }
 
 uint8_t CPU::handle_int()

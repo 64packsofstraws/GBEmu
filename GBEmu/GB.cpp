@@ -71,6 +71,7 @@ bool GB::load_file()
 	f.read((char*)header, sizeof(header));
 
 	rom_size = 0x8000 * (1 << header[0x48]);
+	cgb = header[0x43] == 0x80 || header[0x43] == 0xC0;
 
 	switch (header[0x49]) {
 		case 0: ram_size = 0; break;
@@ -95,7 +96,7 @@ bool GB::load_file()
 	if (cart_type >= 0xF && cart_type <= 0x13)
 		mbc = std::make_unique<MBC3>(rom, ram);
 	if (cart_type >= 0x19 && cart_type <= 0x1E)
-		mbc = std::make_unique<MBC3>(rom, ram);
+		mbc = std::make_unique<MBC5>(rom, ram);
 
 	f.close();
 

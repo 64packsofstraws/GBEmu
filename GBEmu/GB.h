@@ -21,6 +21,8 @@ public:
 	Timer timer;
 	IO io;
 
+	bool cgb;
+
 	GB();
 	int idle_loop();
 	bool load_file();
