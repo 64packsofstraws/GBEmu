@@ -73,6 +73,9 @@ bool GB::load_file()
 	rom_size = 0x8000 * (1 << header[0x48]);
 	cgb = header[0x43] == 0x80 || header[0x43] == 0xC0;
 
+	if (!cgb) ppu.load_dmg_palettes();
+	else ppu.fill_palettes();
+
 	switch (header[0x49]) {
 		case 0: ram_size = 0; break;
 		case 2: ram_size = 1 << 13; break;

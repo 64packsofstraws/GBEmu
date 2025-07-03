@@ -99,6 +99,9 @@ public:
 	PPU(GB* gb);
 	~PPU();
 
+	void load_dmg_palettes();
+	void fill_palettes();
+
 	uint8_t ioread(uint16_t addr);
 	void iowrite(uint16_t addr, uint8_t val);
 

@@ -44,6 +44,26 @@ PPU::~PPU()
 	SDL_Quit();
 }
 
+void PPU::load_dmg_palettes()
+{
+	palette_ram[0x0] = 0xFF;
+	palette_ram[0x1] = 0xFF;
+	palette_ram[0x2] = 0x55;
+	palette_ram[0x3] = 0x55;
+	palette_ram[0x4] = 0xAA;
+	palette_ram[0x5] = 0xAA;
+	palette_ram[0x6] = 0x00;
+	palette_ram[0x7] = 0x00;
+
+	std::copy(palette_ram.begin(), palette_ram.begin() + 7, oam_palette_ram.begin());
+}
+
+void PPU::fill_palettes()
+{
+	std::fill(oam_palette_ram.begin(), oam_palette_ram.end(), 0xFF);
+	std::fill(palette_ram.begin(), palette_ram.end(), 0xFF);
+}
+
 uint8_t PPU::ioread(uint16_t addr)
 {
 	switch (addr) {
@@ -114,7 +134,7 @@ void PPU::iowrite(uint16_t addr, uint8_t val)
 		case 0xFF54: dma_dest = (dma_dest & 0xFF00) | (val & 0xF0); break;
 
 		case 0xFF55: {
-			uint8_t length = (val & 0x7F) / 0x10 - 1;
+			int length = (val & 0x7F) / 0x10 - 1;
 
 			if (!(val & 0x80)) {
 				for (int i = 0; i < length; i++) {
@@ -155,12 +175,12 @@ void PPU::iowrite(uint16_t addr, uint8_t val)
 
 uint8_t PPU::read_vram(uint16_t addr)
 {
-	return (mode != 3) ? vram[vbk * 0x2000 + (addr - 0x8000)] : 0xFF;
+	return vram[vbk * 0x2000 + (addr - 0x8000)];
 }
 
 void PPU::write_vram(uint16_t addr, uint8_t val)
 {
-	if (mode != 3) vram[vbk * 0x2000 + (addr - 0x8000)] = val;
+	vram[vbk * 0x2000 + (addr - 0x8000)] = val;
 }
 
 uint8_t PPU::read_oam(uint16_t addr)
@@ -302,14 +322,7 @@ void PPU::render_sprites()
 
 		uint8_t ydir = (i.flags & 0x40) ? 7 - ((ly - y) % 8) : ((ly - y) % 8);
 
-		uint16_t tileoff;
-		
-		if (gb->cgb) {
-			tileoff = ((i.flags >> 3) & 1) * 0x2000 + tileid * 16 + 2 * ydir;
-		}
-		else {
-			tileoff = tileid * 16 + 2 * ydir;
-		}
+		uint16_t tileoff = ((i.flags >> 3) & 1) * 0x2000 + tileid * 16 + 2 * ydir;
 
 		uint8_t p1 = vram[tileoff];
 		uint8_t p2 = vram[tileoff + 1];
@@ -324,21 +337,26 @@ void PPU::render_sprites()
 			uint8_t bg_attr;
 			uint8_t bg_id = get_bgid(x + j, &bg_attr);
 			
-			if (gb->cgb) {
-				uint16_t pal_idx = 2 * (4 * (i.flags & 0x7) + obj_id);
+			uint16_t pal_idx = 2 * (4 * (i.flags & 0x7) + obj_id);
 
-				uint16_t color = (oam_palette_ram[pal_idx + 1] << 8) | oam_palette_ram[pal_idx];
-				uint32_t rgb = to_rgb888(color);
+			uint16_t color = (oam_palette_ram[pal_idx + 1] << 8) | oam_palette_ram[pal_idx];
+			uint32_t rgb = to_rgb888(color);
 
-				if (obj_id & 0x3) {
-					if ((!(i.flags & 0x80) && !(bg_attr & 0x80)) || !bg_id || !(lcdc & 1)) {
-						framebuf[idx(x + j, ly)] = rgb;
-					}
+			if (obj_id & 0x3) {
+				if ((!(i.flags & 0x80) && !(bg_attr & 0x80)) || !bg_id || !(lcdc & 1)) {
+					framebuf[idx(x + j, ly)] = rgb;
 				}
 			}
 		}
 	}
 	active_obj.clear();
+
+	if (!gb->cgb) {
+		std::sort(active_obj.begin(), active_obj.end(), [](const ObjEntry& a, const ObjEntry& b)
+		{
+			return a.x > b.x;
+		});
+	}
 }
  
 uint16_t PPU::get_tile(uint8_t off)
@@ -473,7 +491,5 @@ void PPU::reset()
 	frame_ready = false;
 
 	std::fill(vram.begin(), vram.end(), 0);
-	std::fill(oam_palette_ram.begin(), oam_palette_ram.end(), 0xFF);
-	std::fill(palette_ram.begin(), palette_ram.end(), 0xFF);
 	std::fill(framebuf.begin(), framebuf.end(), palettes[0]);
 }
